@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hello, WebAssembly!</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        textarea {
+            width: 100%;
+            height: 20vh;
+            font-family: monospace;
+            font-size: 12.5pt;
+        }
+
+        #table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            min-width: 100%;
+        }
+
+        table, th, td {
+            border: 1px solid black;
+            border-collapse: collapse;
+        }
+
+        tbody th {
+            text-align: left;
+            padding-right: 10px;
+        }
+
+        td {
+            font-family: monospace;
+        }
+
+        footer {
+            margin-top: 15px;
+            border-top: 1px solid black;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>Web Hasher</h1>
+    </header>
+    <div id="post-section">
+        <section>
+            <h2>Process file</h2>
+
+            <form autocapitalize="off">
+                <input type="file" id="file" name="file" required>
+                <button type="button" id="do-file-sum">Calculate hash</button>
+            </form>
+        </section>
+        <section>
+            <h2>Process Text</h2>
+            <div>
+                <label for="text">Plain text</label>
+            </div>
+            <div>
+                <textarea id="text" name="text" required></textarea>
+            </div>
+            <div>
+                <label for="new-line-selector">Newline</label>
+                <select id="new-line-selector">
+                    <option value="lf">LF</option>
+                    <option value="crlf">CRLF</option>
+                    <option value="cr">CR</option>
+                </select>
+            </div>
+            <div>
+                <button type="button" id="do-text-sum">Calculate hash</button>
+            </div>
+        </section>
+        <section>
+            <h2>Process hex test</h2>
+            <div>
+                <label for="hex-text">Hex text</label>
+            </div>
+            <div>
+                <textarea id="hex-text" name="hex-text" required></textarea>
+            </div>
+            <div>
+                <button type="button" id="do-hex-sum">Calculate hash</button>
+            </div>
+        </section>
+    </div>
+    <section>
+        <h2>Result</h2>
+        <div id="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Hash (hex)</th>
+                </tr>
+                </thead>
+                <tbody id="result-table"></tbody>
+            </table>
+        </div>
+    </section>
+    <footer>
+        <a href="license.html" rel="license" target="_blank">Third Party Licenses</a>
+    </footer>
+
+    <script>
+        const result_table = document.getElementById("result-table");
+        const do_file_sum = document.getElementById("do-file-sum");
+        const file = document.getElementById("file");
+        const do_text_sum = document.getElementById("do-text-sum");
+        const new_line_selector = document.getElementById("new-line-selector");
+        const do_hex_sum = document.getElementById("do-hex-sum");
+
+        const crlf_convert = {
+            "lf": "\n",
+            "crlf": "\r\n",
+            "cr": "\r"
+        };
+    </script>
+    <script type="module">
+        import init, {calc_hash} from './pkg/webhasher.js';
+        async function run() {
+            await init();
+
+            const write_to_result_table = (hashes) => {
+                result_table.innerHTML = "";
+
+                let keys = Object.keys(hashes).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
+
+                keys.forEach((algorithm) => {
+                    const tr = document.createElement("tr");
+                    const th_algorithm = document.createElement("th");
+                    const td_hash = document.createElement("td");
+
+                    th_algorithm.textContent = algorithm;
+                    th_algorithm.setAttribute("scope", "row");
+                    td_hash.textContent = hashes[algorithm];
+
+                    tr.appendChild(th_algorithm);
+                    tr.appendChild(td_hash);
+
+                    result_table.appendChild(tr);
+                });
+            };
+
+            const do_uint8_arraay_sum = (uint8_array) => {
+                const hashes = calc_hash(uint8_array);
+                write_to_result_table(hashes);
+            };
+
+            do_file_sum.onclick = async () => {
+                if (file.files.length < 1) {
+                    alert("Please select a file.");
+                    return;
+                }
+                const tgt_file = file.files[0];
+                const buffer = await tgt_file.arrayBuffer();
+                const uint8_array = new Uint8Array(buffer);
+                do_uint8_arraay_sum(uint8_array);
+            };
+
+            do_text_sum.onclick = () => {
+                let text = document.getElementById("text").value;
+                text = text.replace(/\r\n|\r|\n/g, crlf_convert[new_line_selector.value]);
+                const text_bytes = new TextEncoder().encode(text);
+                const uint8_array = new Uint8Array(text_bytes);
+                do_uint8_arraay_sum(uint8_array);
+            };
+
+            do_hex_sum.onclick = () => {
+                let hex_text = document.getElementById("hex-text").value;
+                hex_text = hex_text.replace(/(\s|\r|\n|\t)/g, "");
+                if (hex_text.length % 2 !== 0) {
+                    alert("Invalid hex text.");
+                    return;
+                }
+                const hex_bytes = new Uint8Array(hex_text.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
+                do_uint8_arraay_sum(hex_bytes);
+            };
+        }
+        run();
+    </script>
+</body>
+</html>
