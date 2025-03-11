@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>WebHasher</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+    <header>
+        <h1>Web Hasher</h1>
+    </header>
+    <div id="post-section">
+        <section>
+            <h2>Process file</h2>
+
+            <form autocapitalize="off">
+                <input type="file" id="file" name="file" required>
+                <button type="button" id="do-file-sum">Calculate hash</button>
+            </form>
+        </section>
+        <section>
+            <h2>Process Text</h2>
+            <div>
+                <label for="text">Plain text</label>
+            </div>
+            <div>
+                <textarea id="text" name="text" required></textarea>
+            </div>
+            <div>
+                <label for="new-line-selector">Newline</label>
+                <select id="new-line-selector">
+                    <option value="lf">LF</option>
+                    <option value="crlf">CRLF</option>
+                    <option value="cr">CR</option>
+                </select>
+            </div>
+            <div>
+                <button type="button" id="do-text-sum">Calculate hash</button>
+            </div>
+        </section>
+        <section>
+            <h2>Process hex test</h2>
+            <div>
+                <label for="hex-text">Hex text</label>
+            </div>
+            <div>
+                <textarea id="hex-text" name="hex-text" required></textarea>
+            </div>
+            <div>
+                <button type="button" id="do-hex-sum">Calculate hash</button>
+            </div>
+        </section>
+        <section>
+            <h2>Hash to use</h2>
+            <div>
+                <textarea id="hash-to-use" name="hash-to-use" required></textarea>
+            </div>
+            <div>
+                Use <code>;</code> to separate multiple hashes.
+            </div>
+            <div>
+                <button type="button" id="list-all-supported">Use all supported hash</button>
+                <button type="button" id="list-default-hash">Use well-known hash</button>
+            </div>
+        </section>
+    </div>
+    <section>
+        <h2>Result</h2>
+        <p id="result-time-info"></p>
+        <div id="table-container">
+            <table>
+                <thead>
+                <tr>
+                    <th>Algorithm</th>
+                    <th>Hash (hex)</th>
+                </tr>
+                </thead>
+                <tbody id="result-table"></tbody>
+            </table>
+        </div>
+    </section>
+    <footer>
+        <a href="license.html" rel="license" target="_blank">Third Party Licenses</a>
+    </footer>
+
+    <div id="loading-overlay">
+        <div id="loading-item">
+            <span class="spinner"></span>
+            <noscript>
+                <br />
+                <p>JavaScript is disabled. Please enable JavaScript to use this webapp.</p>
+            </noscript>
+        </div>
+    </div>
+
+    <script type="module" src="index.mjs"></script>
+</body>
+</html>

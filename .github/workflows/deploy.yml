@@ -28,17 +28,10 @@ jobs:
       run: cargo install --locked cargo-about
     
     - name: Build
-      run: wasm-pack build --target web
+      run: wasm-pack build --target web --out-dir web/pkg --release --no-pack --no-typescript
 
     - name: Generate licenses
-      run: cargo about generate about.hbs >license.html
-
-    - name: Prepare web directory
-      run: |
-        mkdir web
-        cp license.html web/
-        cp index.html web/
-        cp -r pkg web/pkg
+      run: cargo about generate about.hbs > web/license.html
 
     - name: Deploy
       uses: cloudflare/wrangler-action@v3
