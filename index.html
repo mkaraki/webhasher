@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
     <title>Hello, WebAssembly!</title>
     <meta charset="utf-8">
@@ -7,7 +7,7 @@
     <style>
         textarea {
             width: 100%;
-            height: 20vh;
+            height: 53pt;
             font-family: monospace;
             font-size: 12.5pt;
         }
@@ -38,6 +38,47 @@
         footer {
             margin-top: 15px;
             border-top: 1px solid black;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            width: 100vw;
+            height: 100vh;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        #loading-item {
+            text-align: center;
+            color: white;
+        }
+
+        .hide {
+            display: none !important;
+        }
+
+        .spinner {
+            display: inline-block;
+            border: 3px solid #444;
+            border-left-color: #09f;
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
@@ -87,6 +128,19 @@
                 <button type="button" id="do-hex-sum">Calculate hash</button>
             </div>
         </section>
+        <section>
+            <h2>Hash to use</h2>
+            <div>
+                <textarea id="hash-to-use" name="hash-to-use" required></textarea>
+            </div>
+            <div>
+                Use <code>;</code> to separate multiple hashes.
+            </div>
+            <div>
+                <button type="button" id="list-all-supported">Use all supported hash</button>
+                <button type="button" id="list-default-hash">Use well-known hash</button>
+            </div>
+        </section>
     </div>
     <section>
         <h2>Result</h2>
@@ -106,6 +160,12 @@
         <a href="license.html" rel="license" target="_blank">Third Party Licenses</a>
     </footer>
 
+    <div id="loading-overlay" class="hide">
+        <div id="loading-item">
+            <span class="spinner"></span>
+        </div>
+    </div>
+
     <script>
         const result_table = document.getElementById("result-table");
         const do_file_sum = document.getElementById("do-file-sum");
@@ -113,6 +173,11 @@
         const do_text_sum = document.getElementById("do-text-sum");
         const new_line_selector = document.getElementById("new-line-selector");
         const do_hex_sum = document.getElementById("do-hex-sum");
+        const do_list_all_supported = document.getElementById("list-all-supported");
+        const do_list_default_hash = document.getElementById("list-default-hash");
+        const use_hash_list  = document.getElementById("hash-to-use");
+
+        const loading_overlay = document.getElementById("loading-overlay");
 
         const crlf_convert = {
             "lf": "\n",
@@ -121,7 +186,7 @@
         };
     </script>
     <script type="module">
-        import init, {calc_hash} from './pkg/webhasher.js';
+        import init, {calc_hash, list_hash_name} from './pkg/webhasher.js';
         async function run() {
             await init();
 
@@ -146,9 +211,17 @@
                 });
             };
 
-            const do_uint8_arraay_sum = (uint8_array) => {
-                const hashes = calc_hash(uint8_array);
-                write_to_result_table(hashes);
+            const do_uint8_array_sum = (uint8_array) => {
+                const hash_list = use_hash_list.value.split(';').filter((name) => name.length > 0);
+
+                loading_overlay.classList.remove("hide");
+                setTimeout(() => {
+                    const hashes = calc_hash(uint8_array, hash_list);
+                    write_to_result_table(hashes);
+                    setTimeout(() => {
+                        loading_overlay.classList.add("hide");
+                    });
+                }, 500);
             };
 
             do_file_sum.onclick = async () => {
@@ -156,18 +229,20 @@
                     alert("Please select a file.");
                     return;
                 }
+                loading_overlay.classList.remove("hide");
                 const tgt_file = file.files[0];
                 const buffer = await tgt_file.arrayBuffer();
                 const uint8_array = new Uint8Array(buffer);
-                do_uint8_arraay_sum(uint8_array);
+                do_uint8_array_sum(uint8_array);
             };
 
             do_text_sum.onclick = () => {
+                loading_overlay.classList.remove("hide");
                 let text = document.getElementById("text").value;
                 text = text.replace(/\r\n|\r|\n/g, crlf_convert[new_line_selector.value]);
                 const text_bytes = new TextEncoder().encode(text);
                 const uint8_array = new Uint8Array(text_bytes);
-                do_uint8_arraay_sum(uint8_array);
+                do_uint8_array_sum(uint8_array);
             };
 
             do_hex_sum.onclick = () => {
@@ -177,9 +252,22 @@
                     alert("Invalid hex text.");
                     return;
                 }
+                loading_overlay.classList.remove("hide");
                 const hex_bytes = new Uint8Array(hex_text.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-                do_uint8_arraay_sum(hex_bytes);
+                do_uint8_array_sum(hex_bytes);
             };
+
+            do_list_all_supported.onclick = () => {
+                use_hash_list.value = list_hash_name().join(';');
+            };
+
+            const list_default = () => {
+                use_hash_list.value = list_hash_name().filter((name) => {
+                    return ["CRC32C", "md5", "SHA-1", "SHA-256", "SHA-512", "Blake2b (512bit)", "Blake2s (256bit)", "SHA3-256", "SHA3-512"].includes(name);
+                }).join(';');
+            };
+            do_list_default_hash.onclick = list_default;
+            list_default();
         }
         run();
     </script>
