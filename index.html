@@ -222,7 +222,7 @@
                     const hashes = calc_hash(uint8_array, hash_list);
                     const end_time = performance.now();
                     write_to_result_table(hashes);
-                    result_time_info.textContent = `Time: ${end_time - start_time}ms (${hash_list.length} hash(es))`;
+                    result_time_info.textContent = `Time: ${(end_time - start_time).toLocaleString()}ms, ${hash_list.length.toLocaleString()} hash(es), ${uint8_array.length.toLocaleString()} byte(s)`;
                     setTimeout(() => {
                         loading_overlay.classList.add("hide");
                     }, 0);
