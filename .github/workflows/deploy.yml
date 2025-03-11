@@ -44,7 +44,6 @@ jobs:
       uses: cloudflare/wrangler-action@v3
       with:
         apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        projectName: webhasher
-        directory: web
-        branch: ${{ steps.branch_name.outputs.short_ref }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        command: pages deploy web --project-name webhasher
